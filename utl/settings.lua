@@ -1,3 +1,6 @@
+
+
+
 --[[
 UTL.SetSetting(name, value)
 Saves value in settings file
@@ -92,5 +95,31 @@ function UTL.LoadTable(filename, dir)
     end
     return nil
 end
+
+
+
+
+function UTL.NewVariable(filename)
+	local tbl = UTL.LoadTable(filename);
+	if not (tbl) then
+		tbl = {};
+	end
+
+	return setmetatable({
+			Get = function()
+				return tbl;
+			end
+		}, {
+		__index = function(t, key)
+			return tbl[key];
+		end,
+
+		__newindex = function(t, key, value)
+			tbl[key] = value;
+			UTL.SaveTable(tbl, filename);
+		end
+	});
+end
+
 
 
