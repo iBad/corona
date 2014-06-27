@@ -99,10 +99,11 @@ end
 
 
 
-function UTL.NewVariable(filename)
+function UTL.NewVariable(filename, default)
 	local tbl = UTL.LoadTable(filename);
 	if not (tbl) then
-		tbl = {};
+		tbl = default;
+		UTL.SaveTable(tbl, filename);
 	end
 
 	return setmetatable({
