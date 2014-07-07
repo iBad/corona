@@ -200,7 +200,7 @@ end
 
 
 function table.shuffle(t)
-	math.randomseed(os.time())
+	--math.randomseed(os.time())
 	assert(t, "table.shuffle() expected a table, got nil")
 	local iterations = #t
 	local j
@@ -275,6 +275,13 @@ display.newOutlinedText = function(parent, text, x, y, font, size, outlineSize)
 	txt.anchorX = 0.5;
 	txt.anchorY = 0.5;
 
+	group.setText = function(self, text)
+		txt.text = text;
+		for i = 1, #outlines do
+			outlines[i].text = text;
+		end
+	end
+
 	group.setOutlineColor = function(self, r, g, b)
 		for i = 1, #outlines do
 			outlines[i]:setFillColor(r, g, b);
@@ -343,6 +350,22 @@ function UTL.Set()
 	return set;
 end
 
+function UTL.GetDist(o1, o2) 
+	return math.pow(math.pow(o1.x - o2.x, 2) + math.pow(o1.y - o2.y, 2), 0.5);
+end
+
+function UTL.GetAngle(o1, o2)
+	local distance = UTL.GetDist(o1, o2);
+
+	local dx = (o1.x - o2.x) / distance;
+	local dy = (o1.y - o2.y) / distance;
+
+	local angle = math.asin(dx) / math.pi * 180;
+	if (dy > 0) then
+		angle = 180 - angle;
+	end
+
+	return angle;
+end
 
 
-return UTL;

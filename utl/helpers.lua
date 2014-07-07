@@ -30,7 +30,7 @@ function UTL.NewScene(OnCreate, OnDestroy)
 
 	function scene:create(event)
 		Composer.removeHidden();
-		
+
 		if (OnCreate) then
 			OnCreate(self.view, event.params, scene);
 		end
