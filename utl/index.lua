@@ -2,6 +2,20 @@ UTL = {};
 
 JSON = require("json");
 Composer = require("composer");
+Screen = {
+   Top = display.screenOriginY,
+   Left = display.screenOriginX,
+   Right = display.contentWidth - display.screenOriginX,
+   Bottom = display.contentHeight - display.screenOriginY,
+
+   CenterX = display.contentCenterX,
+   CenterY = display.contentCenterY,
+   Center = { display.contentCenterX, display.contentCenterY },
+
+   Width = display.contentWidth - 2 * display.screenOriginX,
+   Height = display.contentHeight - 2 * display.screenOriginY,
+};
+
 
 require("utl.settings");
 require("utl.helpers");

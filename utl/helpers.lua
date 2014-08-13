@@ -7,7 +7,7 @@ When scene is destroyed wrapper will automatically call Destructors (all functio
 
 Example file test.lua:
 
-local function CreateScene(group, params, scene)
+local function create(group, params, scene)
 	local timerId = timer.performWithDelay(1000, function()
 		print("Do something");
 	end);
@@ -17,7 +17,7 @@ local function CreateScene(group, params, scene)
 	end
 end
 
-return UTL.NewScene(CreateScene);
+return UTL.NewScene(create);
 
 Timer in this example will be called when scene gets destroyed.
 ]]
@@ -26,19 +26,27 @@ function UTL.NewScene(OnCreate, OnDestroy)
 
 	local scene = Composer.newScene();
 	scene.D = {};
+	scene.X = {};
 
 
 	function scene:create(event)
 		Composer.removeHidden();
 
 		if (OnCreate) then
-			OnCreate(self.view, event.params, scene);
+			OnCreate(self.view, event.params or {}, scene);
+		end
+	end
+	
+	function scene:exit(event)
+		for k, v in pairs(self.X) do
+			print("Calling on exit destructor '" .. k .. "'");
+			pcall(v);
 		end
 	end
 	
 	function scene:destroy(event)
 		for k, v in pairs(self.D) do
-			print("Calling destructor '" .. k .. "'");
+			print("Calling on destroy destructor '" .. k .. "'");
 			pcall(v);
 		end
 
@@ -50,6 +58,7 @@ function UTL.NewScene(OnCreate, OnDestroy)
 
 
 	scene:addEventListener("create", scene);
+	scene:addEventListener("exit", scene);
 	scene:addEventListener("destroy", scene);
 	return scene;
 end
@@ -79,11 +88,22 @@ end
 UTL.NewGroup(parent)
 Create new group and insert into parent
 ]]
-function UTL.NewGroup(parent)
+function UTL.NewGroup(parent, anchor)
 	local grp = display.newGroup();
 	parent:insert(grp);
+	grp.anchorChildren = (anchor == true);
 	return grp;
 end
+
+--[[
+UTL.DoLater(fn)
+call fn in 1 milisecond
+]]
+function UTL.DoLater(fn)
+	timer.performWithDelay(1, fn);
+end
+
+
 
 --[[
 UTL.Stringify(this, [docol], [spacing_h], [spacing_v], [preindent])	
@@ -259,6 +279,11 @@ function UTL.Bind(func, ...)
 	return function()
 		return func(unpack(args));
 	end;
+end
+
+
+function UTL.DoAsync(func)
+	timer.performWithDelay(1, func);
 end
 
 --[[

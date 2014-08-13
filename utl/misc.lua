@@ -21,7 +21,7 @@ If sceneName is nil then exits app.
 
 Usage:
 
-function CreateScene(group, params, scene);
+function create(group, params, scene);
 	UTL.SetBackScene("mainmenu");
 	...
 	...
@@ -30,7 +30,7 @@ end
 or 
 
 
-function CreateScene(group, params, scene);
+function create(group, params, scene);
 	UTL.SetBackScene("mainmenu", function(cb)
 		-- Ask user if he wants to go back and if yes
 		-- cb();
@@ -108,7 +108,7 @@ Config = {
 	IOS_APP_ID = "000000000"
 };
 
-local function CreateScene(group, params, scene)
+local function create(group, params, scene)
 	-- when user clicks Rate button call
 	UTL.RateApp();
 end
@@ -123,6 +123,11 @@ function UTL.RateApp()
 		iOSAppId = Config.IOS_APP_ID,
 		supportedAndroidStores = { system.getInfo("targetAppStore") }
 	});
+
+	if (Device.isSimulator) then
+		native.showAlert(Config.GAME_NAME, "Showing Rate Popup", { "OK" });
+	end
+
 end
 
 
@@ -312,39 +317,62 @@ end
 
 
 
-function UTL.Set()
-	local set = {
+
+
+function UTL.MultiIndexMap()
+	local miMap = {
 		vals = {}	
 	};
 
-	set.Set = function(self, ...)
+	miMap.Set = function(self, ...)
 		local t = {...};
 
 		local cval = self.vals;
 
-		for i = 1, #t - 1 do
+		for i = 1, #t - 2 do
 			if (cval[t[i]] == nil) then
 				cval[t[i]] = {};
 			end
 			cval = cval[t[i]];
 		end
 
-		cval[t[#t]] = 1;
+		cval[t[#t - 1]] = t[#t];
 	end
 
-	set.IsSet = function(self, ...)
+	miMap.Get = function(self, ...)
 		local t = {...};
 
 		local cval = self.vals;
 
-		for i = 1, #t - 1 do
+		for i = 1, #t do
 			if (cval[t[i]] == nil) then
-				return false;
+				return nil;
 			end
 			cval = cval[t[i]];
 		end
 
-		return (cval[t[#t]] == 1);
+		return cval;
+	end
+
+	return miMap;
+end
+
+
+
+
+
+function UTL.Set()
+	local set = {
+		vals = UTL.MultiIndexMap()
+	};
+
+	set.Set = function(self, ...)
+		self.vals:Set(..., 1);
+	end
+
+	set.IsSet = function(self, ...)
+		local v = self.vals:Get(...);
+		return (v == 1);
 	end
 
 	return set;
@@ -368,4 +396,18 @@ function UTL.GetAngle(o1, o2)
 	return angle;
 end
 
+
+
+function UTL.URLify(str)
+	local result = "";
+	for i = 1, string.len(str) do
+		local ch = string.sub(str, i, i);
+		if (ch ~= " ") then
+			result = result .. ch;
+		else
+			result = result .. "%20";
+		end
+	end
+	return result;
+end
 

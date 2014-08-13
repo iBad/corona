@@ -17,6 +17,7 @@ function Fireworks.newBasic(options)
 	options.size = options.size or 10;
 	options.dist = options.dist or 150;
 	options.numParticles = options.numParticles or 100;
+	animationTag = options.tag;
 
 
 	local function ChangeBrightness(color, brightness)
@@ -35,7 +36,7 @@ function Fireworks.newBasic(options)
 		transition.to(bullet, {
 			alpha = 0,
 			time = 200,
-			tag = "Firework_Animation"
+			tag = animationTag
 		});
 
 		for i = 1, options.numParticles do
@@ -53,13 +54,14 @@ function Fireworks.newBasic(options)
 				x = bullet.x + distance * math.sin(dir),
 				y = bullet.y + distance * math.cos(dir),
 				alpha = 0,
-				tag = "Firework_Animation"
+				tag = animationTag
 			});
 
 		end
 	end
 	local function FireImpl()
-		
+		print("Firework #", animationTag);
+
 		local bullet = display.newRect(group, 0, 0, options.size, options.size);
 		bullet:setFillColor(unpack(options.color));
 
@@ -69,22 +71,27 @@ function Fireworks.newBasic(options)
 		local d = Dist(options.fromX, options.fromY, options.toX, options.toY);
 		local time = d * 3;
 
+		print(time, options.toX, options.toY, tag)
 		transition.to(bullet, {
 			time = time,
 			x = options.toX,
 			y = options.toY,
-			tag = "Firework_Animation",
+			tag = animationTag,
 			onComplete = UTL.Bind(BlowUp, bullet);
 		});
 	end
 
 	local function Fire(delay)
-		pTimer.create(delay, FireImpl):setTag("Firework_Animation");
+		pTimer.create(delay, FireImpl):setTag(animationTag);
 	end
 		
 	local function Destroy()
-		transition.cancel("Firework_Animation");
-		pTimer.cancelAll("Firework_Animation");
+		for i=1,10 do
+			transition.cancel(animationTag);
+		end
+		pTimer.cancelAll(animationTag);
+
+		print("Destroy ", animationTag);
 	end
 
 	return {
@@ -104,7 +111,6 @@ function Fireworks.newBunch(options)
 
 	local colors = UTL.Clone(options.colors);
 	table.shuffle(colors);
-	UTL.Dump(colors);
 
 	local fireworks = {};
 
@@ -123,7 +129,8 @@ function Fireworks.newBunch(options)
 			fromY = options.fromY,
 			toX = toX,
 			toY = toY,
-			color = color
+			color = color,
+			tag = "Firework_Animation_" .. math.random(4239048);
 		}));
 	end
 
