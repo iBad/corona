@@ -82,7 +82,8 @@ function Fireworks.newBasic(options)
 	end
 
 	local function Fire(delay)
-		pTimer.create(delay, FireImpl):setTag(animationTag);
+		
+		pTimer.create(delay, UTL.Bind(pcall, FireImpl)):setTag(animationTag);
 	end
 		
 	local function Destroy()
@@ -96,7 +97,8 @@ function Fireworks.newBasic(options)
 
 	return {
 		Fire = Fire,
-		Destroy = Destroy
+		Destroy = Destroy,
+		Group = group
 	};
 end
 

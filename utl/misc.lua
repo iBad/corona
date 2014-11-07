@@ -12,6 +12,26 @@ function UTL.CleanUp()
 end
 
 
+function UTL.AddDestructor(obj, func)
+	obj._isWidget = true;
+	if (not obj.originalRemove) then
+		obj.originalRemove = obj.removeSelf or UTL.EmptyFn;
+		obj.removeSelf = function(self)
+
+			for i = 1, #self.D do
+				self.D[i](self);
+			end
+			self:originalRemove();
+		end
+
+		obj.D = {};
+	end
+
+	table.insert(obj.D, func);
+
+end
+
+
 
 --[[
 UTL.SetBackScene(sceneName, confirmFunction)
@@ -215,29 +235,102 @@ function table.shuffle(t)
 	end
 end
 
+function table.merge(t1, t2)
+	for i=1,#t2 do
+		t1[#t1+1] = t2[i];
+	end
+	return t1;
+end
+
+
+
 function table.copy(t)
   local t2 = {}
   for k,v in pairs(t) do
-    t2[k] = v
+	t2[k] = v
   end
   return t2
 end
 
 
+function table.clone(t, seen)
+	seen = seen or {}
+	if t == nil then return nil end
+	if seen[t] then return seen[t] end
+
+	local nt = {}
+	for k, v in pairs(t) do
+		if type(v) == 'table' then
+			nt[k] = table.copy(v, deep, seen)
+		else
+			nt[k] = v
+		end
+	end
+	setmetatable(nt, table.clone(getmetatable(t), seen))
+	seen[t] = nt
+	return nt
+end
+
+
+function table.pick_random(tbl)
+	if (#tbl ~= 0) then
+		return tbl[math.random(#tbl)];
+	end
+
+	local keyset={}
+	local n=0
+
+	for k,v in pairs(tbl) do
+		n=n+1
+		keyset[n]=k
+	end
+	local rnd = math.random(n);
+	return tbl[keyset[rnd]], keyset[rnd];
+end
+
+
+
+
+function table.objsort(t, cmpLess, start, endi)
+	start, endi = start or 1, endi or #t;
+	if (endi - start < 1) then 
+		return t;
+	end
+
+	local pivot = start;
+
+	for i = start + 1, endi do
+		if cmpLess(t[i], t[pivot]) then
+	  		local temp = t[pivot + 1];
+	  		t[pivot + 1] = t[pivot];
+
+			if(i == pivot + 1) then
+				t[pivot] = temp;
+			else
+				t[pivot] = t[i];
+				t[i] = temp;
+			end
+	  		
+	  		pivot = pivot + 1;
+		end
+  	end
+  	t = table.objsort(t, cmpLess, start, pivot - 1);
+  	return table.objsort(t, cmpLess, pivot + 1, endi);
+end
 
 
 function string.lpad(str, len, char)
-    if char == nil then char = ' ' end
-    return str .. string.rep(char, len - #str)
+	if char == nil then char = ' ' end
+	return str .. string.rep(char, len - #str)
 end
 
 function string.rpad(str, len, char)
-    if char == nil then char = ' ' end
-    return string.rep(char, len - #str) .. str
+	if char == nil then char = ' ' end
+	return string.rep(char, len - #str) .. str
 end
 
 function string.char_replace(pos, str, r)
-    return ("%s%s%s"):format(str:sub(1,pos-1), r, str:sub(pos+1));
+	return ("%s%s%s"):format(str:sub(1,pos-1), r, str:sub(pos+1));
 end
 
 function string.at(str, index)
@@ -245,6 +338,10 @@ function string.at(str, index)
 end
 
 
+
+display.newOutlinedTextLegacy = function(parent, text, font, size, outlineSize) 
+	return display.newOutlinedText(parent, text, 0, 0, font, size, outlineSize);
+end
 
 display.newOutlinedText = function(parent, text, x, y, font, size, outlineSize) 
 	local group = display.newGroup();
@@ -303,6 +400,45 @@ display.newOutlinedText = function(parent, text, x, y, font, size, outlineSize)
 end
 
 
+
+display.newMaskPng = function(group, path, width, height, mpath)
+
+	local mask = nil;
+	mpath = mpath or string.gsub(path, "/", "-");
+	if (UTL.FileExist(mpath, system.TemporaryDirectory)) then
+		mask = graphics.newMask(mpath, system.TemporaryDirectory);
+	else
+
+		local grp = display.newGroup();
+		grp.anchorChildren = true;
+		
+		width = math.ceil(width / 4) * 4;
+		height = math.ceil(height / 4) * 4;
+
+		local r = display.newRect(grp, 0, 0, width, height);
+		r:setFillColor(0);
+
+		local i = display.newImageRect(grp, path, width, height);
+		i.fill.effect = "filter.brightness";
+		i.fill.effect.intensity = 1;
+
+		display.save(grp, {
+			filename = mpath,
+			baseDir = system.TemporaryDirectory,
+			isFullResolution = true
+		});
+
+		grp:removeSelf();
+		mask = graphics.newMask(mpath, system.TemporaryDirectory);
+	end
+	local i = display.newImageRect(group, path, width, height);
+	i:setMask(mask);
+	return i;
+end
+
+
+
+
 function UTL.GetTime(timestamp)
 	return os.date("%H:%M:%S %d %b %Y", timestamp);
 end
@@ -341,6 +477,8 @@ function UTL.MultiIndexMap()
 
 	miMap.Get = function(self, ...)
 		local t = {...};
+
+		UTL.Dump(self);
 
 		local cval = self.vals;
 
@@ -397,6 +535,13 @@ function UTL.GetAngle(o1, o2)
 end
 
 
+function UTL.Pos(dest, source)
+	dest.x, dest.y = source.x, source.y;
+end
+
+function UTL.RandomXY()
+	return math.random(Screen.Left, Screen.Right), math.random(Screen.Top, Screen.Bottom);
+end
 
 function UTL.URLify(str)
 	local result = "";
@@ -410,4 +555,127 @@ function UTL.URLify(str)
 	end
 	return result;
 end
+
+function UTL.FileExist( fname, path )
+    local results = false;
+    local filePath = system.pathForFile( fname, path );
+
+    if filePath then
+        filePath = io.open( filePath, "r" );
+    end
+
+    if  filePath then
+        filePath:close();
+        results = true;
+    end
+
+    return results;
+end
+
+
+function UTL.CreateFolder(name)
+
+	local lfs = require "lfs"
+	local temp_path = system.pathForFile( "", system.TemporaryDirectory )
+	local success = lfs.chdir( temp_path ) -- returns true on success
+	local new_folder_path
+
+	if success then
+	   lfs.mkdir( name )
+	   new_folder_path = lfs.currentdir() .. "/" .. name
+	end
+
+end
+
+
+function UTL.Error(msg)
+	if (Device.isSimulator) then
+		native.showAlert("Error", msg, {"OK"});
+	else
+		print(msg);
+	end
+end
+
+
+
+
+
+
+
+function UTL.ToPostData(tbl)
+	local p = {};
+	for k,v in pairs(tbl) do
+
+		if (type(v) == "table") then
+
+			for k1,v1 in pairs(v) do
+				p[#p + 1] = k .. "%5B" .. k1 .. "%5D=" .. v1;
+			end
+
+		else
+			p[#p + 1] = k .. "=" .. v;
+		end
+
+	end
+
+	local str = "";
+
+	for i = 1, #p do
+		str = str .. p[i];
+		if (i ~= #p) then
+			str = str .. "&";
+		end
+	end
+
+	return str;
+end
+
+
+function UTL.Post(url, data, onsuccess, onerror, oncomplete) 
+	onsuccess = onsuccess or UTL.EmptyFn;
+	onerror = onerror or UTL.EmptyFn;
+	oncomplete = oncomplete or UTL.EmptyFn;
+
+	local params = {};
+
+	params.body = UTL.ToPostData(data);
+	params.timeout = 10;
+
+	local function networkListener(event)
+		if ( event.isError ) then
+			onerror({
+				isError = true,
+				message = "Network error"
+			});
+			return oncomplete();
+		else
+			
+			local r = JSON.decode(event.response);
+			if (r == nil) then
+				onerror({
+					isError = true,
+					message = "Invalid response from server"
+				});
+				UTL.Dump(event);
+				return oncomplete();
+			end
+
+			if (r.is_error) then
+				
+				onerror({
+					isError = true,
+					message = r.message
+				});
+				return oncomplete();
+			end
+
+			onsuccess(r);
+			return oncomplete();
+		end
+
+	end
+
+	network.request(url, "POST", networkListener, params);
+end
+
 

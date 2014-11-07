@@ -26,25 +26,61 @@ function UTL.NewScene(OnCreate, OnDestroy)
 
 	local scene = Composer.newScene();
 	scene.D = {};
-	scene.X = {};
+	scene.H = {};
+	scene.S = {};
 
 
 	function scene:create(event)
-		Composer.removeHidden();
+		scene.sceneName = event.sceneName or Composer.getSceneName("current");
+		scene.removeOnHide = true;
+
+		
+		print("Creating scene ", scene.sceneName);
+--		UTL.Dump(event);
 
 		if (OnCreate) then
 			OnCreate(self.view, event.params or {}, scene);
 		end
+
 	end
 	
-	function scene:exit(event)
-		for k, v in pairs(self.X) do
-			print("Calling on exit destructor '" .. k .. "'");
-			pcall(v);
+	function scene:hide(event)
+		if (event.phase == "did") and (self.removeOnHide) then
+			Composer.removeScene(self.sceneName);
+
+
+			for k, v in pairs(self.H) do
+				print("Calling on hide function '" .. k .. "'");
+				pcall(v);
+			end
+		end
+	end
+	
+	function scene:show(event)
+		--if (event.phase == "will") then
+		--	scene.touchGuard = display.newRect(Screen.CenterX, Screen.CenterY, Screen.Width, Screen.Height);
+		--	scene.touchGuard.alpha = 0;
+		--	scene.touchGuard.isHitTestable = true;
+		--	scene.touchGuard:addEventListener("touch", UTL.TrueFn);
+		--	scene.touchGuard:addEventListener("tap", UTL.TrueFn);
+		--
+		--end
+
+		if (event.phase == "did") then
+			for k, v in pairs(self.S) do
+				print("Calling on show function '" .. k .. "'");
+				pcall(v, event.params);
+			end
+
+			--pTimer.create(100, function()
+			--	scene.touchGuard:removeSelf();
+			--end);
 		end
 	end
 	
 	function scene:destroy(event)
+		print("Destroying scene ", self.sceneName);
+
 		for k, v in pairs(self.D) do
 			print("Calling on destroy destructor '" .. k .. "'");
 			pcall(v);
@@ -58,7 +94,8 @@ function UTL.NewScene(OnCreate, OnDestroy)
 
 
 	scene:addEventListener("create", scene);
-	scene:addEventListener("exit", scene);
+	scene:addEventListener("hide", scene);
+	scene:addEventListener("show", scene);
 	scene:addEventListener("destroy", scene);
 	return scene;
 end
@@ -84,13 +121,32 @@ function UTL.SafeRemove(obj)
 	end);
 end
 
+
+--[[
+UTL.HideObject(group)
+Sets objects isVisible to false
+]]
+function UTL.HideObject(obj)
+	obj.isVisible = false;
+end
+
+--[[
+UTL.ShowObject(group)
+Sets objects isVisible to true
+]]
+function UTL.ShowObject(obj)
+	obj.isVisible = true;
+end
+
 --[[
 UTL.NewGroup(parent)
 Create new group and insert into parent
 ]]
 function UTL.NewGroup(parent, anchor)
 	local grp = display.newGroup();
-	parent:insert(grp);
+	if (parent) then
+		parent:insert(grp);
+	end
 	grp.anchorChildren = (anchor == true);
 	return grp;
 end
@@ -227,9 +283,9 @@ end
 UTL.CallIf(func)
 Schedules function call not nil
 ]]
-function UTL.CallIf(func)
+function UTL.CallIf(func, ...)
 	if (func) then
-		timer.performWithDelay(1, func);
+		func(...);
 	end
 end
 
@@ -350,5 +406,18 @@ UTL.Clone(obj)
 return clone of obj. Using JSON.encode and JSON.decode to clone
 ]]
 function UTL.Clone(obj)
+	print("Use table.clone() insted");
 	return JSON.decode(JSON.encode(obj));
+end
+
+
+
+function UTL.OneOf(...)
+	local items = {...};
+	local ind = math.random(1, #items);
+	return items[ind];
+end
+
+function UTL.InRange(num, min, max)
+	return (num <= max) and (num >= min);
 end

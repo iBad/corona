@@ -24,4 +24,27 @@ require("utl.timers");
 require("utl.fireworks");
 
 
+
+Composer.Overlay = function(scene, params)
+	Composer.showOverlay(scene, {
+		params = params,
+		isModal = true
+	});
+end
+
+Composer.Goto = function(scene, params, options)
+   options = options or {};
+   options.params = params;
+
+   if (Composer.getSceneName("current") == scene) then
+      Composer.gotoScene("scenereloader", {
+         params = {
+            callback = UTL.Bind(Composer.gotoScene, scene, options)
+         }
+      });
+   else
+	  Composer.gotoScene(scene, options);
+   end
+end
+
 return UTL;

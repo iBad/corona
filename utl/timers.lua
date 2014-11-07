@@ -8,7 +8,7 @@
 
 pTimer = {
 	allTimers = {},
-	debug = true,
+	debug = false,
 };
 
 function pTimer.print(...)

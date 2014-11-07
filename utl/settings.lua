@@ -93,4 +93,11 @@ function UTL.LoadTable(filename, dir)
     return nil
 end
 
+function UTL.RemoveTable(filename)
+   local path = system.pathForFile( filename, system.DocumentsDirectory);
+    os.remove(path)
+end
+
+
+
 
