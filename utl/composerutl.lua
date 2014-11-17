@@ -217,5 +217,26 @@ function UTL.GoBack()
 		end
 
 	end
-
 end
+
+
+
+
+--------------------------------------------------------
+-- Andoird back button support
+--------------------------------------------------------
+
+if system.getInfo("platformName") == "Android" then  
+	Runtime:addEventListener("key", function(event)
+		local phase = event.phase;
+		local keyName = event.keyName;
+
+		if ( "back" == keyName and phase == "up" ) then
+			UTL.GoBack();
+			return true;
+		end
+		return false;
+	end); 
+end
+
+
