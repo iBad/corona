@@ -1,121 +1,4 @@
 
-UTL.BackInfo = {}
-
-
---[[
-UTL.CleanUp()
-Removes all hidden scenes and calls garbage collection
-]]
-function UTL.CleanUp()
-	Composer.removeHidden();
-	collectgarbage("collect");
-end
-
-
-function UTL.AddDestructor(obj, func)
-	obj._isWidget = true;
-	if (not obj.originalRemove) then
-		obj.originalRemove = obj.removeSelf or UTL.EmptyFn;
-		obj.removeSelf = function(self)
-
-			for i = 1, #self.D do
-				self.D[i](self);
-			end
-			self:originalRemove();
-		end
-
-		obj.D = {};
-	end
-
-	table.insert(obj.D, func);
-
-end
-
-
-
---[[
-UTL.SetBackScene(sceneName, confirmFunction)
-
-Sets back scene for current scene, if confirmFunction is not nil then it will be called before going back.
-If sceneName is nil then exits app.
-
-Usage:
-
-function create(group, params, scene);
-	UTL.SetBackScene("mainmenu");
-	...
-	...
-end
-
-or 
-
-
-function create(group, params, scene);
-	UTL.SetBackScene("mainmenu", function(cb)
-		-- Ask user if he wants to go back and if yes
-		-- cb();
-	end);
-
-	...
-	...
-end
-]]
-function UTL.SetBackScene(sceneName, confirmFunction)
-	UTL.BackInfo.name = sceneName;
-	UTL.BackInfo.confirm = confirmFunction;
-end
-
-
---[[
-UTL.GoBack()
-
-Goes back as specified using UTL.SetBackScene
-]]
-function UTL.GoBack()
-	print("Go back", UTL.BackInfo.name, UTL.BackInfo.confirm);
-
-	if (Composer.getSceneName("overlay") ~= nil) then
-		local overlayName = Composer.getSceneName("overlay");
-
-		local scene = Composer.getScene(overlayName);
-
-		if (not scene.ignoreOnBack) then
-			print("Hiding overlay ", overlayName);
-			Composer.hideOverlay();
-			return;
-		end
-	end
-
-	local function GoBackImpl()
-		collectgarbage("collect");
-		
-		print("Going back to: ", UTL.BackInfo.name, UTL.BackInfo.confirm);
-		Composer.gotoScene(UTL.BackInfo.name, {
-			params = {
-				fromBack = true
-			}
-		});
-	end
-	
-	if (UTL.BackInfo.name ~= nil) then
-
-		if (UTL.BackInfo.confirm) then
-			UTL.BackInfo.confirm(GoBackImpl);
-		else
-			GoBackImpl();
-		end
-
-	else
-
-		if (UTL.BackInfo.confirm) then
-			UTL.BackInfo.confirm();
-		else
-			native.requestExit();
-		end
-
-	end
-
-end
 
 --[[
 UTL.RateApp() 
@@ -151,20 +34,6 @@ function UTL.RateApp()
 end
 
 
-
-function UTL.ArrayEqual(s1, s2)
-	if (#s1 ~= #s2) then
-		return false;
-	end
-
-	for i = 1, #s1 do
-		if (s1[i] ~= s2[i]) then
-			return false;
-		end
-	end
-
-	return true;
-end
 
 
 
@@ -224,120 +93,6 @@ end
 
 
 
-function table.shuffle(t)
-	--math.randomseed(os.time())
-	assert(t, "table.shuffle() expected a table, got nil")
-	local iterations = #t
-	local j
-	for i = iterations, 2, -1 do
-		j = math.random(i)
-		t[i], t[j] = t[j], t[i]
-	end
-end
-
-function table.merge(t1, t2)
-	for i=1,#t2 do
-		t1[#t1+1] = t2[i];
-	end
-	return t1;
-end
-
-
-
-function table.copy(t)
-  local t2 = {}
-  for k,v in pairs(t) do
-	t2[k] = v
-  end
-  return t2
-end
-
-
-function table.clone(t, seen)
-	seen = seen or {}
-	if t == nil then return nil end
-	if seen[t] then return seen[t] end
-
-	local nt = {}
-	for k, v in pairs(t) do
-		if type(v) == 'table' then
-			nt[k] = table.copy(v, deep, seen)
-		else
-			nt[k] = v
-		end
-	end
-	setmetatable(nt, table.clone(getmetatable(t), seen))
-	seen[t] = nt
-	return nt
-end
-
-
-function table.pick_random(tbl)
-	if (#tbl ~= 0) then
-		return tbl[math.random(#tbl)];
-	end
-
-	local keyset={}
-	local n=0
-
-	for k,v in pairs(tbl) do
-		n=n+1
-		keyset[n]=k
-	end
-	local rnd = math.random(n);
-	return tbl[keyset[rnd]], keyset[rnd];
-end
-
-
-
-
-function table.objsort(t, cmpLess, start, endi)
-	start, endi = start or 1, endi or #t;
-	if (endi - start < 1) then 
-		return t;
-	end
-
-	local pivot = start;
-
-	for i = start + 1, endi do
-		if cmpLess(t[i], t[pivot]) then
-	  		local temp = t[pivot + 1];
-	  		t[pivot + 1] = t[pivot];
-
-			if(i == pivot + 1) then
-				t[pivot] = temp;
-			else
-				t[pivot] = t[i];
-				t[i] = temp;
-			end
-	  		
-	  		pivot = pivot + 1;
-		end
-  	end
-  	t = table.objsort(t, cmpLess, start, pivot - 1);
-  	return table.objsort(t, cmpLess, pivot + 1, endi);
-end
-
-
-function string.lpad(str, len, char)
-	if char == nil then char = ' ' end
-	return str .. string.rep(char, len - #str)
-end
-
-function string.rpad(str, len, char)
-	if char == nil then char = ' ' end
-	return string.rep(char, len - #str) .. str
-end
-
-function string.char_replace(pos, str, r)
-	return ("%s%s%s"):format(str:sub(1,pos-1), r, str:sub(pos+1));
-end
-
-function string.at(str, index)
-	return string.sub(str, index, index);
-end
-
-
 
 display.newOutlinedTextLegacy = function(parent, text, font, size, outlineSize) 
 	return display.newOutlinedText(parent, text, 0, 0, font, size, outlineSize);
@@ -346,6 +101,10 @@ end
 display.newOutlinedText = function(parent, text, x, y, font, size, outlineSize) 
 	local group = display.newGroup();
 	parent:insert(group);
+
+	if (Device.isSimulator) and (font ~= nil) then
+		y = y - size * 0.15;
+	end
 
 
 	local iterations = outlineSize * 2;
@@ -439,17 +198,6 @@ end
 
 
 
-function UTL.GetTime(timestamp)
-	return os.date("%H:%M:%S %d %b %Y", timestamp);
-end
-
-
-function UTL.Range(val, min, max)
-	if (val < min) then return min; end
-	if (val > max) then return max; end
-	return val;
-end
-
 
 
 
@@ -515,6 +263,9 @@ function UTL.Set()
 
 	return set;
 end
+
+
+
 
 function UTL.GetDist(o1, o2) 
 	return math.pow(math.pow(o1.x - o2.x, 2) + math.pow(o1.y - o2.y, 2), 0.5);

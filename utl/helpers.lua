@@ -1,104 +1,4 @@
---[[
-UTL.NewScene(OnCreate, [OnDestroy]) 
 
-Usage: Use for composer.newScene() wrapping. Gets two functions OnCreate and OnDestroy. 
-OnCreate funcitons will receive 3 arguments GroupObject of scene (i.e. self.view), params passed to gotoScene and scene itself
-When scene is destroyed wrapper will automatically call Destructors (all functions added to scene.D) (see example)
-
-Example file test.lua:
-
-local function create(group, params, scene)
-	local timerId = timer.performWithDelay(1000, function()
-		print("Do something");
-	end);
-
-	scene.D.CancelTimer = function()
-		timer.cancel(timerId);
-	end
-end
-
-return UTL.NewScene(create);
-
-Timer in this example will be called when scene gets destroyed.
-]]
-
-function UTL.NewScene(OnCreate, OnDestroy)
-
-	local scene = Composer.newScene();
-	scene.D = {};
-	scene.H = {};
-	scene.S = {};
-
-
-	function scene:create(event)
-		scene.sceneName = event.sceneName or Composer.getSceneName("current");
-		scene.removeOnHide = true;
-
-		
-		print("Creating scene ", scene.sceneName);
---		UTL.Dump(event);
-
-		if (OnCreate) then
-			OnCreate(self.view, event.params or {}, scene);
-		end
-
-	end
-	
-	function scene:hide(event)
-		if (event.phase == "did") and (self.removeOnHide) then
-			Composer.removeScene(self.sceneName);
-
-
-			for k, v in pairs(self.H) do
-				print("Calling on hide function '" .. k .. "'");
-				pcall(v);
-			end
-		end
-	end
-	
-	function scene:show(event)
-		--if (event.phase == "will") then
-		--	scene.touchGuard = display.newRect(Screen.CenterX, Screen.CenterY, Screen.Width, Screen.Height);
-		--	scene.touchGuard.alpha = 0;
-		--	scene.touchGuard.isHitTestable = true;
-		--	scene.touchGuard:addEventListener("touch", UTL.TrueFn);
-		--	scene.touchGuard:addEventListener("tap", UTL.TrueFn);
-		--
-		--end
-
-		if (event.phase == "did") then
-			for k, v in pairs(self.S) do
-				print("Calling on show function '" .. k .. "'");
-				pcall(v, event.params);
-			end
-
-			--pTimer.create(100, function()
-			--	scene.touchGuard:removeSelf();
-			--end);
-		end
-	end
-	
-	function scene:destroy(event)
-		print("Destroying scene ", self.sceneName);
-
-		for k, v in pairs(self.D) do
-			print("Calling on destroy destructor '" .. k .. "'");
-			pcall(v);
-		end
-
-		if (OnDestroy) then
-			OnDestroy();
-		end
-	end
-
-
-
-	scene:addEventListener("create", scene);
-	scene:addEventListener("hide", scene);
-	scene:addEventListener("show", scene);
-	scene:addEventListener("destroy", scene);
-	return scene;
-end
 
 --[[
 UTL.ClearGroup(group)
@@ -106,6 +6,11 @@ Clean everything in group using UTL.SafeRemove
 ]]
 function UTL.ClearGroup(group)
 	for i = group.numChildren, 1, -1 do
+
+		if (group[i].numChildren ~= nil) then
+			UTL.ClearGroup(group[i]);
+		end
+
 		UTL.SafeRemove(group[i]);
 	end
 end
@@ -116,6 +21,14 @@ UTL.SafeRemove(group)
 Calls obj:removeSelf() in pcall
 ]]
 function UTL.SafeRemove(obj)
+
+	if (obj.D ~= nil) then
+		for k, v in pairs(obj.D) do
+			print("Calling destructor of object called '" .. k .. "'");
+			pcall(v);
+		end
+	end
+
 	return pcall(function()
 		obj:removeSelf();
 	end);
@@ -161,82 +74,20 @@ end
 
 
 
+function UTL.DoAsync(func)
+	timer.performWithDelay(1, func);
+end
+
+
 --[[
-UTL.Stringify(this, [docol], [spacing_h], [spacing_v], [preindent])	
-Converts complex object to string 
+UTL.CallIf(func)
+Schedules function call not nil
 ]]
-function UTL.Stringify(this, docol, spacing_h, spacing_v, preindent)
-	local function _stringify(stack, this, spacing_h, spacing_v, space_n, parsed)
-	    local this_type = type(this)
-	    if this_type == "string" then
-	        stack[#stack+1] = (
-	                spacing_v ~= "\n" and string.gsub(string.format("%q", this), "\\\n", "\\n")
-	            or  string.format("%q", this)
-	        )
-	    elseif this_type == "boolean" then
-	        stack[#stack+1] = this and "true" or "false"
-	    elseif this_type == "number" then
-	        stack[#stack+1] = tostring(this)
-	    elseif this_type == "function" then
-	        local info = debug.getinfo(this, "S")
-	        stack[#stack+1] = "function"
-	        stack[#stack+1] = ":("
-	        if not info or info.what == "C" then
-	            stack[#stack+1] = "[C]"
-	        else
-	            --[[local param_list = debug.getparams(this)
-	            for param_i = 1, #param_list do
-	                stack[#stack+1] = param_list[param_i]
-	            end]]
-	        end
-	        stack[#stack+1] = ")"
-	    elseif this_type == "table" then
-	        if parsed[this] then
-	            stack[#stack+1] = "<"..tostring(this)..">"
-	        else
-	            parsed[this] = true
-	            stack[#stack+1] = "{"..spacing_v
-	            for key,val in pairs(this) do
-	                stack[#stack+1] = string.rep(spacing_h, space_n).."["
-	                _stringify(stack, key, spacing_h, spacing_v, space_n+1, parsed)
-	                stack[#stack+1] = "] = "
-	                _stringify(stack, val, spacing_h, spacing_v, space_n+1, parsed)
-	                stack[#stack+1] = ","..spacing_v
-	            end
-	            stack[#stack+1] = string.rep(spacing_h, space_n-1).."}"
-	        end
-	    elseif this_type == "nil" then
-	        stack[#stack+1] = "nil"
-	    else
-	        stack[#stack+1] = this_type.."<"..tostring(this)..">"
-	    end
+function UTL.CallIf(func, ...)
+	if (func) then
+		func(...);
 	end
-
-
-
-    local stack = {}
-    _stringify(
-        stack,
-        this,
-        spacing_h or "    ", spacing_v or "\n",
-        (tonumber(preindent) or 0)+1,
-        {}
-    )
-    return table.concat(stack)
 end
-
---[[
-UTL.PrintTable(tbl) and UTL.Dump(tbl)
-Dump table to screen
-]]
-function UTL.PrintTable(tbl)
-	print(UTL.Stringify(tbl));
-end
-
-function UTL.Dump(tbl)
-	print(UTL.Stringify(tbl));
-end
-
 
 
 
@@ -276,17 +127,6 @@ function UTL.CallN(count, func)
 			func();
 		end
 	end;
-end
-
-
---[[
-UTL.CallIf(func)
-Schedules function call not nil
-]]
-function UTL.CallIf(func, ...)
-	if (func) then
-		func(...);
-	end
 end
 
 
@@ -337,10 +177,6 @@ function UTL.Bind(func, ...)
 	end;
 end
 
-
-function UTL.DoAsync(func)
-	timer.performWithDelay(1, func);
-end
 
 --[[
 UTL.Chain(...)
@@ -418,6 +254,19 @@ function UTL.OneOf(...)
 	return items[ind];
 end
 
+
 function UTL.InRange(num, min, max)
 	return (num <= max) and (num >= min);
 end
+
+
+function UTL.Range(val, min, max)
+	if (val < min) then return min; end
+	if (val > max) then return max; end
+	return val;
+end
+
+UTL.Clip = UTL.Range;
+
+
+
