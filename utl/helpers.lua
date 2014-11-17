@@ -22,7 +22,7 @@ Calls obj:removeSelf() in pcall
 ]]
 function UTL.SafeRemove(obj)
 
-	if (obj.D ~= nil) then
+	if (obj ~= nil and obj.D ~= nil and type(obj.D) == "table") then
 		for k, v in pairs(obj.D) do
 			print("Calling destructor of object called '" .. k .. "'");
 			pcall(v);
@@ -34,35 +34,6 @@ function UTL.SafeRemove(obj)
 	end);
 end
 
-
---[[
-UTL.HideObject(group)
-Sets objects isVisible to false
-]]
-function UTL.HideObject(obj)
-	obj.isVisible = false;
-end
-
---[[
-UTL.ShowObject(group)
-Sets objects isVisible to true
-]]
-function UTL.ShowObject(obj)
-	obj.isVisible = true;
-end
-
---[[
-UTL.NewGroup(parent)
-Create new group and insert into parent
-]]
-function UTL.NewGroup(parent, anchor)
-	local grp = display.newGroup();
-	if (parent) then
-		parent:insert(grp);
-	end
-	grp.anchorChildren = (anchor == true);
-	return grp;
-end
 
 --[[
 UTL.DoLater(fn)
