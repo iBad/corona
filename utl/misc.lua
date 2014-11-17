@@ -21,7 +21,7 @@ function UTL.RateApp()
 	local packageName = system.getInfo("androidAppPackageName");
 	local targetStore = system.getInfo("targetAppStore");
 	
-	native.showPopup("rateApp", {
+	native.showPopup("appStore", {
 		androidAppPackageName = system.getInfo("androidAppPackageName"),
 		iOSAppId = Config.IOS_APP_ID,
 		supportedAndroidStores = { system.getInfo("targetAppStore") }
