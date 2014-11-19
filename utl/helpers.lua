@@ -36,6 +36,31 @@ end
 
 
 --[[
+	add destructor
+]]
+function UTL.OnDestroy(obj, callback, name)
+	obj.D = obj.D or {};
+	if (name == nil) then
+
+		if (UTL.UniqueDestructorID == nil) then
+			UTL.UniqueDestructorID = 1;
+		end
+
+		name = "Destructor_" .. UTL.UniqueDestructorID;
+		UTL.UniqueDestructorID = UTL.UniqueDestructorID + 1;
+
+	end
+
+	obj.D[name] = callback;
+end
+
+function UTL.TimerDestroyer(timerId)
+	return function()
+		pcall(timer.cancel, timerId);
+	end
+end
+
+--[[
 UTL.DoLater(fn)
 call fn in 1 milisecond
 ]]
