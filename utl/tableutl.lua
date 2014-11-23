@@ -13,7 +13,19 @@ function UTL.ArrayEqual(s1, s2)
 	return true;
 end
 
-
+function table.foreach(tbl, func)
+	local res = {};
+	if (#tbl ~= 0) then
+		for i = 1, #tbl do
+			res[i] = func(tbl[i], i);
+		end
+	else
+		for k,v in pairs(tbl) do
+			res[k] = func(v, k);
+		end
+	end
+	return res;
+end
 
 function table.shuffle(t)
 	--math.randomseed(os.time())

@@ -17,15 +17,17 @@ local function create(group, params, scene)
 end
 ]]
 
-function UTL.RateApp() 
+function UTL.RateApp(config) 
 	local packageName = system.getInfo("androidAppPackageName");
 	local targetStore = system.getInfo("targetAppStore");
 	
-	native.showPopup("appStore", {
+	config = config or {
 		androidAppPackageName = system.getInfo("androidAppPackageName"),
 		iOSAppId = Config.IOS_APP_ID,
 		supportedAndroidStores = { system.getInfo("targetAppStore") }
-	});
+	};
+
+	native.showPopup("appStore", config);
 
 	if (Device.isSimulator) then
 		native.showAlert(Config.GAME_NAME, "Showing Rate Popup", { "OK" });

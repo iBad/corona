@@ -73,7 +73,7 @@ function Social.Share(method)
 		if (method == "twitter") then
 			native.showPopup("social", {
 				service = method, -- The service key is ignored on Android.
-				message = message,
+				message = Social.Message,
 				url = { 
 					Social.GetAppURL(),
 				},

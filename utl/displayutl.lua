@@ -49,8 +49,10 @@ function UTL.NewGroup(parent, anchor)
 end
 
 
-function UTL.Center(obj)
+function UTL.Center(obj, dx, dy)
 	obj.x, obj.y = unpack(Screen.Center);
+	if (dx) then obj.x = obj.x + dx; end
+	if (dy) then obj.y = obj.y + dy; end
 end
 
 function UTL.Pos(dest, source)
