@@ -1,4 +1,3 @@
-require("utl.index");
 
 local UndderConfig = {
 	Functions = {},
