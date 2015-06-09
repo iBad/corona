@@ -1,4 +1,23 @@
 --[[
+UTL.ClearSetting(name, value)
+Clears setttings from settings file
+
+Usage:
+UTL.ClearSetting("last_level");
+
+]]
+function UTL.ClearSetting(name)
+    local setting = UTL.LoadTable("settings.json");
+
+    if (setting == nil) then
+        setting = {};
+    end
+
+    setting[name] = nil;
+    UTL.SaveTable(setting, "settings.json");
+end
+
+--[[
 UTL.SetSetting(name, value)
 Saves value in settings file
 

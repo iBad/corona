@@ -33,6 +33,7 @@ function UTL.NewScene(OnCreate, OnDestroy)
 	function scene:create(event)
 		scene.sceneName = event.sceneName or Composer.getSceneName("current");
 		scene.removeOnHide = true;
+		Composer.removeHidden();
 
 		print("Creating scene ", scene.sceneName);
 

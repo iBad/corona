@@ -86,6 +86,17 @@ function UTL.CallIf(func, ...)
 end
 
 
+function UTL.ConfirmDoCb(title, message, action) 
+	return function()
+		native.showAlert(title, message, { "Yes", "No" }, function(event)
+			if (event.action == "clicked" and event.index == 1) then
+				action();
+			end
+		end);
+	end;
+end
+
+
 
 
 
@@ -168,8 +179,8 @@ transition.to(obj, {
 function UTL.Bind(func, ...)
 	local args = {...};
 
-	return function()
-		return func(unpack(args));
+	return function(...)
+		return func(unpack(args), ...);
 	end;
 end
 

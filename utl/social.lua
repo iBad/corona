@@ -21,15 +21,17 @@ end
 
 
 function Social.Setup(options) 
-
-	Social.Message = options.message or Social.Message;
-	Social.Picture = options.picture or Social.Picture;
+	options = options or {};
+	Social.Message = options.Message or Social.Message;
+	Social.Picture = options.Picture or Social.Picture;
 	Social.URL = options.URL or Social.URL;
 
+	UTL.Dump(Social);
 end
 
 
 function Social.Share(method)
+	UTL.Dump(Social);
 	LogEvent(method .. "_share_attempt");
 
 	if (Device.isSimulator) then

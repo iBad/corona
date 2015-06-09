@@ -71,7 +71,13 @@ function UTL.PrintTable(tbl)
 	print(UTL.Stringify(tbl));
 end
 
-function UTL.Dump(tbl)
+function UTL.Dump(tbl, sep)
+	if (sep) then
+		print(string.rep(sep, 80));
+	end
 	print(UTL.Stringify(tbl));
+	if (sep) then
+		print(string.rep(sep, 80));
+	end
 end
 

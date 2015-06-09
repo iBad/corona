@@ -6,6 +6,8 @@
 -----------------------------------------------------------
 -----------------------------------------------------------
 
+require("socket");
+
 pTimer = {
 	allTimers = {},
 	debug = false,
@@ -15,6 +17,10 @@ function pTimer.print(...)
 	if (pTimer.debug) then
 		print(...);
 	end
+end
+
+function pTimer.timestamp()
+	return math.ceil(1000 * socket.gettime());
 end
 
 function pTimer.foreach(tagName, fn)

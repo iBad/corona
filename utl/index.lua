@@ -18,10 +18,15 @@ require("utl.fireworks");
 require("utl.composerutl");
 require("utl.animations");
 require("utl.social");
-
-require("utl.undder");
 require("utl.undderex");
 
 LogEvent = LogEvent or UTL.EmptyFn;
+
+
+Runtime:addEventListener("unhandledError", function( event )
+	UTL.Dump(event);
+	return true;
+end);
+
 
 return UTL;
